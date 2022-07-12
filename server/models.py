@@ -2,15 +2,17 @@ from extensions import db
 
 class PowerStations(db.Model):
   """Power Stations"""
-  __tablename__='power_stations'
+  __tablename__='stations'
   id = db.Column(db.Integer, nullable=False, primary_key=True)
   licencearea = db.Column(db.Text)
   sitename = db.Column(db.Text)
-  sitefunctionallocation = db.Column(db.Text, unique=True)
+  # sitefunctionallocation = db.Column(db.Text, db.ForeignKey('stations.sitefunctionallocation'), unique=True)
+  sitefunctionallocation = db.Column(db.Text, db.ForeignKey('stations.sitefunctionallocation'))
   sitetype = db.Column(db.Text)
   sitevoltage = db.Column(db.Integer)
   esqcroverallrisk = db.Column(db.Text)
-  gridref = db.Column(db.Text, unique=True)
+  # gridref = db.Column(db.Text, db.ForeignKey('stations.gridref'), unique=True)
+  gridref = db.Column(db.Text, db.ForeignKey('stations.gridref'))
   siteassetcount = db.Column(db.Integer)
   electricalassetcount = db.Column(db.Integer)
   powertransformercount = db.Column(db.Integer)
@@ -23,7 +25,7 @@ class PowerStations(db.Model):
   county = db.Column(db.Text)
   postcode = db.Column(db.Text)
   yearcommissioned = db.Column(db.Integer)
-  datecommissioned = db.Column(db.Text)
+  datecommissioned = db.Column(db.Date)
   siteclassification = db.Column(db.Text)
   assessmentdate = db.Column(db.Date)
   last_report = db.Column(db.Text)
@@ -31,4 +33,4 @@ class PowerStations(db.Model):
   measuredresistance_ohm = db.Column(db.Float)
   next_assessmentdate = db.Column(db.Date)
   local_authority = db.Column(db.Text)
-  local_authority_code = db.Column(db.Text)
+  local_authority_code = db.Column(db.Text, db.ForeignKey('stations.local_authority_code'))

@@ -1,6 +1,6 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
-from models import PowerStations
+# from models import PowerStations
 
 app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
@@ -16,3 +16,11 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+@app.route("/")
+def index():
+   return render_template("index.html")
+
+if __name__=='__main__':
+   app.debug=True
+app.run()
