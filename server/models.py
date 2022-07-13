@@ -3,16 +3,13 @@ from extensions import db
 class PowerStations(db.Model):
   """Power Stations"""
   __tablename__='stations'
-  id = db.Column(db.Integer, nullable=False, primary_key=True)
+  sitefunctionallocation = db.Column(db.VARCHAR, primary_key=True)
   licencearea = db.Column(db.Text)
   sitename = db.Column(db.Text)
-  # sitefunctionallocation = db.Column(db.Text, db.ForeignKey('stations.sitefunctionallocation'), unique=True)
-  sitefunctionallocation = db.Column(db.Text, db.ForeignKey('stations.sitefunctionallocation'))
   sitetype = db.Column(db.Text)
   sitevoltage = db.Column(db.Integer)
   esqcroverallrisk = db.Column(db.Text)
-  # gridref = db.Column(db.Text, db.ForeignKey('stations.gridref'), unique=True)
-  gridref = db.Column(db.Text, db.ForeignKey('stations.gridref'))
+  gridref = db.Column(db.Text)
   siteassetcount = db.Column(db.Integer)
   electricalassetcount = db.Column(db.Integer)
   powertransformercount = db.Column(db.Integer)
@@ -22,7 +19,7 @@ class PowerStations(db.Model):
   street = db.Column(db.Text)
   suburb = db.Column(db.Text)
   towncity = db.Column(db.Text)
-  county = db.Column(db.Text)
+  county = db.Column(db.Text, db.ForeignKey('flood_reports.county'))
   postcode = db.Column(db.Text)
   yearcommissioned = db.Column(db.Integer)
   datecommissioned = db.Column(db.Date)
@@ -33,4 +30,24 @@ class PowerStations(db.Model):
   measuredresistance_ohm = db.Column(db.Float)
   next_assessmentdate = db.Column(db.Date)
   local_authority = db.Column(db.Text)
-  local_authority_code = db.Column(db.Text, db.ForeignKey('stations.local_authority_code'))
+  local_authority_code = db.Column(db.Text)
+  lastupdate = db.Column(db.TIMESTAMP)
+
+class FloodReports(db.Model):
+  """Flood Reports"""
+  __tablename__='flood_reports'
+  id = db.Column(db.Text, nullable=False, primary_key=True)
+  county = db.Column(db.Text, db.ForeignKey('stations.county'))
+  description = db.Column(db.Text)
+  eaAreaName = db.Column(db.Text)
+  envelope = db.Column(db.VARCHAR)
+  fwdCode = db.Column(db.Text)
+  label = db.Column(db.Text)
+  lat = db.Column(db.Float)
+  long = db.Column(db.Float)
+  notation = db.Column(db.Text)
+  polygon = db.Column(db.Text)
+  quickDialNumber = db.Column(db.Integer)
+  riverOrSea = db.Column(db.Text)
+  type = db.Column(db.VARCHAR)
+  lastupdate = db.Column(db.TIMESTAMP)

@@ -1,7 +1,7 @@
 """
 PowerNetworkapi.py created by Alan D 09/06/2022
 """
-import json, psycopg2, requests, urllib.request, nltk
+import json, psycopg2, requests, urllib.request, nltk, datetime
 from typing import final
 from os import path
 from urllib import response
@@ -16,9 +16,9 @@ from models import PowerStations
 
 
 """
-Connect to the local database Postgres
+Working - Connect to the local database Postgres
 """
-def connectDatabase():
+def connect_database():
   try:
     #establishing the connection
     conn = psycopg2.connect(
@@ -43,7 +43,7 @@ def connectDatabase():
 """
 Create a database table
 """
-def createDatabaseTable():
+def create_database_table():
   try:
     #establishing the connection
     conn = psycopg2.connect(
@@ -53,45 +53,71 @@ def createDatabaseTable():
     cursor = conn.cursor()
 
     #Executing an MYSQL function using the execute() method
-    cursor.execute("DROP TABLE IF EXISTS STATIONS")
+    cursor.execute("DROP TABLE IF EXISTS STATIONS, FLOOD_REPORTS")
 
     #Creating table as per requirement
-    sql= '''CREATE TABLE STATIONS(
-      id SERIAL PRIMARY KEY,
-      licencearea VARCHAR,
-      sitename VARCHAR,
-      sitefunctionallocation VARCHAR,
-      sitetype VARCHAR,
-      sitevoltage INT,
-      esqcroverallrisk VARCHAR,
-      gridref VARCHAR,
-      siteassetcount INT,
-      powertransformercount INT,
-      electricalassetcount INT,
-      civilassetcount INT,
-      longitude FLOAT,
-      latitude FLOAT,
-      street VARCHAR,
-      suburb VARCHAR,
-      towncity VARCHAR,
-      county VARCHAR,
-      postcode VARCHAR,
-      yearcommissioned INT,
-      datecommissioned DATE,
-      siteclassification TEXT,
-      assessmentdate DATE,
-      last_report VARCHAR,
-      calculatedresistance TEXT,
-      measuredresistance_ohm FLOAT,
-      next_assessmentdate DATE,
-      local_authority VARCHAR,
-      local_authority_code VARCHAR
-      )'''
+    commands= (
+      """
+      CREATE TABLE STATIONS
+        (
+        sitefunctionallocation VARCHAR PRIMARY KEY,
+        licencearea VARCHAR,
+        sitename VARCHAR,
+        sitetype VARCHAR,
+        sitevoltage INT,
+        esqcroverallrisk VARCHAR,
+        gridref VARCHAR,
+        siteassetcount INT,
+        powertransformercount INT,
+        electricalassetcount INT,
+        civilassetcount INT,
+        longitude FLOAT,
+        latitude FLOAT,
+        street VARCHAR,
+        suburb TEXT,
+        towncity TEXT,
+        county VARCHAR,
+        postcode VARCHAR,
+        yearcommissioned INT,
+        datecommissioned DATE,
+        siteclassification TEXT,
+        assessmentdate DATE,
+        last_report VARCHAR,
+        calculatedresistance TEXT,
+        measuredresistance_ohm FLOAT,
+        next_assessmentdate DATE,
+        local_authority VARCHAR,
+        local_authority_code VARCHAR,
+        lastupdate TIMESTAMP
+        )
+      """,
+      """
+      CREATE TABLE FLOOD_REPORTS
+        (
+        id TEXT PRIMARY KEY,
+        county TEXT,
+        description VARCHAR,
+        eaAreaName TEXT,
+        envelope VARCHAR,
+        fwdCode VARCHAR,
+        label TEXT,
+        lat FLOAT,
+        long FLOAT,
+        notation VARCHAR,
+        polygon VARCHAR,
+        quickDialNumber INT,
+        riverOrSea TEXT,
+        type VARCHAR,
+        lastupdate TIMESTAMP
+        )
+      """
+    )
 
-    cursor.execute(sql)
+    for command in commands:
+      cursor.execute(command)
     print('Table created successfully......')
     conn.commit()
-    #Closing the connection
+      #Closing the connection
     conn.close()
   except Exception as e:
     print(e)
@@ -102,7 +128,7 @@ def createDatabaseTable():
 """
 Insert data into database table 
 """
-def insertData():
+def add_merge_to_database():
   #  property = connector.get_session().query(Property).filter(Property.propid == propid ).first()
   try:
     networkTable = db.session.query(PowerStations)
@@ -111,14 +137,16 @@ def insertData():
     print('Failed to get from PowerStations')
     return 'Failure'
 
-  features = getDataset()
+  # features = getDataset()
+  powergridsJson = open('Powergrids.json', 'r')
+  features = json.load(powergridsJson)
   
   for items in features:
     try:
       powerstations = PowerStations()
+      powerstations.sitefunctionallocation = items['properties']['sitefunctionallocation']
       powerstations.licencearea = items['properties']['licencearea']
       powerstations.sitename = items['properties']['sitename']
-      powerstations.sitefunctionallocation = items['properties']['sitefunctionallocation']
       powerstations.sitetype = items['properties']['sitetype']
       powerstations.sitevoltage = items['properties']['sitevoltage']
       powerstations.esqcroverallrisk = items['properties']['esqcroverallrisk']
@@ -144,6 +172,7 @@ def insertData():
       powerstations.next_assessmentdate = items['properties']['next_assessmentdate']
       powerstations.local_authority = items['properties']['local_authority']
       powerstations.local_authority_code = items['properties']['local_authority_code']
+      powerstations.lastupdate = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
       if networkTable is not None:
         db.session.merge(powerstations)
@@ -171,18 +200,15 @@ def insertData():
 """
 Retrieve data of primary sites from UK Power Networks based on a local authority.
 """
-def getDataset():
+def get_dataset():
   params = '/geojson?where=local_authority%3D%27Tower%20Hamlets%27&limit=-1&offset=0&timezone=Europe%2FLondon'
   datasetID = 'grid-and-primary-sites/exports'
-  # datasetID = 'grid-and-primary-sites'
-  # dataset = '/catalog/datasets/' + '{' + datasetID + '}'
 
   #Try to request from the api, if successful then attempt to retrieve data from api request
   try:
     response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/' + datasetID + params, timeout=3)
     # response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2')
-    # print(str(response))
-    # print(response.json)
+    print(str(response))
   except Exception as e:
     print('Query failed')
     print(response.status_code)
@@ -192,7 +218,7 @@ def getDataset():
     try:
       response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/' + datasetID + params, timeout=3)
       # response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2')
-      # print(str(response))
+      print(str(response))
     except Exception as e:
       print('Query failed')
       print(response.status_code)
@@ -204,24 +230,20 @@ def getDataset():
     if("features" in data.keys()):
       features = data['features']
 
-      # #Write out the data to a json file  
-      # with open('Powergrids.json', 'w') as f:
-      #   json.dump(features, f)
+      #Write out the data to a json file  
+      with open('Powergrids.json', 'w') as f:
+        json.dump(features, f)
 
       if len(features) >0:
         return features
       else:
         return None
-        # for items in features:
-        #   print(items['properties'])
-        #   # For each word title() turns first letter to uppercase and all other letters to lowercase
-        #   print(items['properties']['sitename'].title(), items['properties']['postcode'])
 
 
 """
 Retrieve data on Flood warnings within London.
 """
-def getFloodWarnings():
+def get_flood_warnings():
   ## Try to request from the api, if successful then attempt to retrieve data from api request
   # datasetID = 'id/stations'
   # params = 'town='
@@ -251,7 +273,7 @@ def getFloodWarnings():
 """
 Read text about relevant Live Reports from webpage. 
 """
-def getLiveReports():
+def get_live_reports():
   try:
     response = requests.get('https://www.ukpowernetworks.co.uk/power-cut/list', timeout=3)
     print(str(response))
@@ -276,10 +298,10 @@ def getLiveReports():
 #
 #----- Execute functions -----#
 #
-# connectDatabase()
-# createDatabaseTable()
-insertData()
-# getDataset()
-# getFloodWarnings()
-# getLiveReports()
+# connect_database()
+# create_database_table()
+add_merge_to_database()
+# get_dataset()
+# get_flood_warnings()
+# get_live_reports()
 
