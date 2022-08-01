@@ -1,7 +1,7 @@
 """
 PowerNetworkapi.py created by Alan D 09/06/2022
 """
-import json, psycopg2, requests, urllib.request, nltk, datetime
+import json, psycopg2, requests, urllib.request, nltk, datetime, faulthandler, pdb, gc, pickle
 from typing import final
 from os import path
 from urllib import response
@@ -14,15 +14,21 @@ from models import PowerStations
 #Terminal Commands
 #psql — PostgreSQL interactive terminal
 
+# gc.disable()
+# gc.isenabled()
+# faulthandler.enable()
 
 """
 Working - Connect to the local database Postgres
 """
 def connect_database():
+  local_connect = open('data/connect.json', 'r')
+  connects = json.load(local_connect)
+
   try:
     #establishing the connection
     conn = psycopg2.connect(
-      database="alanmicah", user='alanmicah', password='local', host='127.0.0.1', port= '5432'
+      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['database']
     )
     #Creating a cursor object using the cursor() method
     cursor = conn.cursor()
@@ -41,13 +47,17 @@ def connect_database():
 
 
 """
-Create a database table
+Create a power network stations database table
 """
 def create_database_table():
+
+  local_connect = open('data/connect.json', 'r')
+  connects = json.load(local_connect)
+
   try:
     #establishing the connection
     conn = psycopg2.connect(
-      database="alanmicah", user='alanmicah', password='local', host='127.0.0.1', port= '5432'
+      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['database']
     )
     #Creating a cursor object using the cursor() method
     cursor = conn.cursor()
@@ -90,39 +100,85 @@ def create_database_table():
         local_authority_code VARCHAR,
         lastupdate TIMESTAMP
         )
-      """,
       """
-      CREATE TABLE FLOOD_REPORTS
-        (
-        id TEXT PRIMARY KEY,
-        county TEXT,
-        description VARCHAR,
-        eaAreaName TEXT,
-        envelope VARCHAR,
-        fwdCode VARCHAR,
-        label TEXT,
-        lat FLOAT,
-        long FLOAT,
-        notation VARCHAR,
-        polygon VARCHAR,
-        quickDialNumber INT,
-        riverOrSea TEXT,
-        type VARCHAR,
-        lastupdate TIMESTAMP
-        )
-      """
+      # """
+      # CREATE TABLE FLOOD_REPORTS
+      #   (
+      #   id TEXT PRIMARY KEY,
+      #   county TEXT,
+      #   description VARCHAR,
+      #   eaAreaName TEXT,
+      #   envelope VARCHAR,
+      #   fwdCode VARCHAR,
+      #   label TEXT,
+      #   lat FLOAT,
+      #   long FLOAT,
+      #   notation VARCHAR,
+      #   polygon VARCHAR,
+      #   quickDialNumber INT,
+      #   riverOrSea TEXT,
+      #   type VARCHAR,
+      #   lastupdate TIMESTAMP
+      #   )
+      # """
     )
 
-    for command in commands:
-      cursor.execute(command)
+    # for command in commands:
+    cursor.execute(commands)
     print('Table created successfully......')
     conn.commit()
-      #Closing the connection
+    #Closing the connection
     conn.close()
   except Exception as e:
     print(e)
     print('Table creation failed')
     conn.close()
+
+  def create_flood_report_table():
+    try:
+      #establishing the connection
+      conn = psycopg2.connect(
+        database="alanmicah", user='alanmicah', password='local', host='127.0.0.1', port= '5432'
+      )
+      #Creating a cursor object using the cursor() method
+      cursor = conn.cursor()
+
+      #Executing an MYSQL function using the execute() method
+      cursor.execute("DROP TABLE IF EXISTS STATIONS, FLOOD_REPORTS")
+
+      #Creating table as per requirement
+      commands= (
+        """
+        CREATE TABLE FLOOD_REPORTS
+          (
+          id TEXT PRIMARY KEY,
+          county TEXT,
+          description VARCHAR,
+          eaAreaName TEXT,
+          envelope VARCHAR,
+          fwdCode VARCHAR,
+          label TEXT,
+          lat FLOAT,
+          long FLOAT,
+          notation VARCHAR,
+          polygon VARCHAR,
+          quickDialNumber INT,
+          riverOrSea TEXT,
+          type VARCHAR,
+          lastupdate TIMESTAMP
+          )
+        """
+      )
+
+      cursor.execute(commands)
+      print('Table created successfully......')
+      conn.commit()
+      #Closing the connection
+      conn.close()
+    except Exception as e:
+      print(e)
+      print('Table creation failed')
+      conn.close()
 
 
 """
@@ -138,7 +194,7 @@ def add_merge_to_database():
     return 'Failure'
 
   # features = getDataset()
-  powergridsJson = open('Powergrids.json', 'r')
+  powergridsJson = open('data/Powergrids.json', 'r')
   features = json.load(powergridsJson)
   
   for items in features:
@@ -231,7 +287,7 @@ def get_dataset():
       features = data['features']
 
       #Write out the data to a json file  
-      with open('Powergrids.json', 'w') as f:
+      with open('data/Powergrids.json', 'w') as f:
         json.dump(features, f)
 
       if len(features) >0:
@@ -300,8 +356,9 @@ def get_live_reports():
 #
 # connect_database()
 # create_database_table()
-add_merge_to_database()
+# add_merge_to_database()
 # get_dataset()
 # get_flood_warnings()
 # get_live_reports()
 
+# pdb.set_trace()
