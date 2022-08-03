@@ -1,7 +1,7 @@
 """
 PowerNetworkapi.py created by Alan D 09/06/2022
 """
-import json, psycopg2, requests, urllib.request, nltk, datetime, faulthandler, pdb, gc, pickle
+import json, psycopg2, requests, urllib.request, nltk, datetime, faulthandler, pdb, gc, pickle, spacy
 from typing import final
 from os import path
 from urllib import response
@@ -11,8 +11,8 @@ from bs4 import BeautifulSoup
 from extensions import db
 from models import PowerStations
 
-#Terminal Commands
-#psql — PostgreSQL interactive terminal
+# Terminal Commands
+# psql — PostgreSQL interactive terminal
 
 # gc.disable()
 # gc.isenabled()
@@ -24,6 +24,11 @@ Working - Connect to the local database Postgres
 def connect_database():
   local_connect = open('data/connect.json', 'r')
   connects = json.load(local_connect)
+  # "database": "",
+  # "user": "",
+  # "password": "",
+  # "host": "",
+  # "port": ""
 
   try:
     #establishing the connection
@@ -327,29 +332,47 @@ def get_flood_warnings():
 
 
 """
-Read text about relevant Live Reports from webpage. 
+Read and parse text about relevant Live Reports from webpage.
 """
-def get_live_reports():
-  try:
-    response = requests.get('https://www.ukpowernetworks.co.uk/power-cut/list', timeout=3)
-    print(str(response))
-    print(response.json)
-  except Exception as e:
-    print('Query failed')
-    print(response.status_code)
-    return None
-
-  if response.status_code == 200:
-    data = response.json()
-    print(data)
-
+def try_live_reports():
   quote_page = 'https://www.ukpowernetworks.co.uk/power-cut/list'
 
-  ## Allows the page to be opened, viewed and read by the programm
+  # Allows the page to be opened, viewed and read by the programm
   page = urllib.request.urlopen(quote_page)
   page_read = page.read()
   soup = BeautifulSoup(page_read, 'html.parser')
 
+  with requests.Session() as session:
+      
+    # Parsing parameters
+    response = session.get(quote_page)
+    soup = BeautifulSoup(response.content)
+
+    # data = {
+    #     'data-value': 'TypeID_unplanned_power_cut',
+    # }
+
+    # Parsing data
+    response = session.post(quote_page)
+    soup = BeautifulSoup(response.content)
+    # Parsing all content selected within 'tr' tags
+    table_p_tags = soup.select('tr p')
+    # tsoup = soup.select('tr')
+    # # Write out the data to a json file  
+    # with open('data/try_live_reports.html', 'w') as file:
+    #   file.write(str(table_p_tags))
+
+    ## Tokenizing the text
+    article_text = ""
+    for para in table_p_tags:
+      article_text += para.text.strip() + " "
+    with open('data/article_text.txt', 'w') as file:
+      file.write(str(article_text))
+    
+    # nlp = spacy.blank("en")
+    # article_doc = nlp(article_text)
+    # with open('data/doc.txt', 'w') as file:
+    #   file.write(str(article_doc))
 
 #
 #----- Execute functions -----#
@@ -359,6 +382,6 @@ def get_live_reports():
 # add_merge_to_database()
 # get_dataset()
 # get_flood_warnings()
-# get_live_reports()
+try_live_reports() # This function should be ran as a heartbeat (refreshing constantly)
 
 # pdb.set_trace()

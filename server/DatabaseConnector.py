@@ -10,12 +10,6 @@ POSTGRES_PASS = os.environ.get("POSTGRES_PASS", "postgres")
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT", 5432)
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
-#
-# POSTGRES_USER = 'alanmicah'
-# POSTGRES_PASS = 'local'
-# POSTGRES_HOST = 'postgresql://postgres:postgres@localhost/alanmicah'
-# POSTGRES_PORT = 5432
-# POSTGRES_DB = 'stations'
 
 SQLALCHEMY_DATABASE_URI = "postgresql://{}:{}@{}:{}/{}".format(
     POSTGRES_USER,
