@@ -1,189 +1,16 @@
 """
 PowerNetworkapi.py created by Alan D 09/06/2022
 """
-import json, psycopg2, requests, urllib.request, datetime, faulthandler, pdb, gc, pickle, spacy, numpy
+import json, requests, datetime, faulthandler, pdb, gc, pickle, spacy, numpy
 from typing import final
 from os import path
 from urllib import response
-from nltk import re, word_tokenize
-from nltk.stem import WordNetLemmatizer
-from bs4 import BeautifulSoup
 from extensions import db
 from models import PowerStations
-
-# Terminal Commands
-# psql — PostgreSQL interactive terminal
 
 # gc.disable()
 # gc.isenabled()
 # faulthandler.enable()
-
-"""
-Working - Connect to the local database Postgres
-"""
-def connect_database():
-  local_connect = open('data/connect.json', 'r')
-  connects = json.load(local_connect)
-  # "database": "",
-  # "user": "",
-  # "password": "",
-  # "host": "",
-  # "port": ""
-
-  try:
-    #establishing the connection
-    conn = psycopg2.connect(
-      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['database']
-    )
-    #Creating a cursor object using the cursor() method
-    cursor = conn.cursor()
-
-    #Executing an MYSQL function using the execute() method
-    cursor.execute("select version()")
-
-    #Fetch a single row using fetchone() method.
-    data = cursor.fetchone()
-    print("Connection established to: ",data)
-
-    #Closing the connection
-    conn.close()
-  except Exception as e:
-    print('Could not connect to database')
-
-
-"""
-Create a power network stations database table
-"""
-def create_database_table():
-
-  local_connect = open('data/connect.json', 'r')
-  connects = json.load(local_connect)
-
-  try:
-    #establishing the connection
-    conn = psycopg2.connect(
-      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['database']
-    )
-    #Creating a cursor object using the cursor() method
-    cursor = conn.cursor()
-
-    #Executing an MYSQL function using the execute() method
-    cursor.execute("DROP TABLE IF EXISTS STATIONS, FLOOD_REPORTS")
-
-    #Creating table as per requirement
-    commands= (
-      """
-      CREATE TABLE STATIONS
-        (
-        sitefunctionallocation VARCHAR PRIMARY KEY,
-        licencearea VARCHAR,
-        sitename VARCHAR,
-        sitetype VARCHAR,
-        sitevoltage INT,
-        esqcroverallrisk VARCHAR,
-        gridref VARCHAR,
-        siteassetcount INT,
-        powertransformercount INT,
-        electricalassetcount INT,
-        civilassetcount INT,
-        longitude FLOAT,
-        latitude FLOAT,
-        street VARCHAR,
-        suburb TEXT,
-        towncity TEXT,
-        county VARCHAR,
-        postcode VARCHAR,
-        yearcommissioned INT,
-        datecommissioned DATE,
-        siteclassification TEXT,
-        assessmentdate DATE,
-        last_report VARCHAR,
-        calculatedresistance TEXT,
-        measuredresistance_ohm FLOAT,
-        next_assessmentdate DATE,
-        local_authority VARCHAR,
-        local_authority_code VARCHAR,
-        lastupdate TIMESTAMP
-        )
-      """
-      # """
-      # CREATE TABLE FLOOD_REPORTS
-      #   (
-      #   id TEXT PRIMARY KEY,
-      #   county TEXT,
-      #   description VARCHAR,
-      #   eaAreaName TEXT,
-      #   envelope VARCHAR,
-      #   fwdCode VARCHAR,
-      #   label TEXT,
-      #   lat FLOAT,
-      #   long FLOAT,
-      #   notation VARCHAR,
-      #   polygon VARCHAR,
-      #   quickDialNumber INT,
-      #   riverOrSea TEXT,
-      #   type VARCHAR,
-      #   lastupdate TIMESTAMP
-      #   )
-      # """
-    )
-
-    # for command in commands:
-    cursor.execute(commands)
-    print('Table created successfully......')
-    conn.commit()
-    #Closing the connection
-    conn.close()
-  except Exception as e:
-    print(e)
-    print('Table creation failed')
-    conn.close()
-
-  def create_flood_report_table():
-    try:
-      #establishing the connection
-      conn = psycopg2.connect(
-        database="alanmicah", user='alanmicah', password='local', host='127.0.0.1', port= '5432'
-      )
-      #Creating a cursor object using the cursor() method
-      cursor = conn.cursor()
-
-      #Executing an MYSQL function using the execute() method
-      cursor.execute("DROP TABLE IF EXISTS STATIONS, FLOOD_REPORTS")
-
-      #Creating table as per requirement
-      commands= (
-        """
-        CREATE TABLE FLOOD_REPORTS
-          (
-          id TEXT PRIMARY KEY,
-          county TEXT,
-          description VARCHAR,
-          eaAreaName TEXT,
-          envelope VARCHAR,
-          fwdCode VARCHAR,
-          label TEXT,
-          lat FLOAT,
-          long FLOAT,
-          notation VARCHAR,
-          polygon VARCHAR,
-          quickDialNumber INT,
-          riverOrSea TEXT,
-          type VARCHAR,
-          lastupdate TIMESTAMP
-          )
-        """
-      )
-
-      cursor.execute(commands)
-      print('Table created successfully......')
-      conn.commit()
-      #Closing the connection
-      conn.close()
-    except Exception as e:
-      print(e)
-      print('Table creation failed')
-      conn.close()
 
 
 """
@@ -301,66 +128,6 @@ def get_dataset():
         return None
 
 
-"""
-Retrieve data on Flood warnings within London.
-"""
-def get_flood_warnings():
-  ## Try to request from the api, if successful then attempt to retrieve data from api request
-  # datasetID = 'id/stations'
-  # params = 'town='
-  params = 'county=London'
-  # params = 'E09000001'
-  try:
-    responseTest = requests.get('http://environment.data.gov.uk/flood-monitoring/id/floodAreas/122WAC953', timeout=3)
-    # response = requests.get('http://environment.data.gov.uk/flood-monitoring/id/floodAreas/' + datasetID + params, timeout=3)
-    response = requests.get('http://environment.data.gov.uk/flood-monitoring/id/floods?' + params, timeout=3)
-    print(str(response))
-    print(response.json)
-  except Exception as e:
-    print('Query failed')
-    print(response.status_code)
-    return None
-
-  if responseTest.status_code == 200:
-    data = responseTest.json()
-    with open('Flooddata.json', 'w') as f:
-      json.dump(data, f)
-    if data['items']:
-      print('Flood warning: \n', data['items']['county'], data['items']['description'], '\n', data['items']['riverOrSea'])
-    else:
-      print('No current flood warnings')
-
-
-"""
-Read and parse text about relevant Live Reports from webpage.
-"""
-def try_live_reports():
-  power_cut_page = 'https://www.ukpowernetworks.co.uk/power-cut/list'
-
-  # Allows the page to be opened, viewed and read by the programm
-  page = urllib.request.urlopen(power_cut_page)
-  page_read = page.read()
-  soup = BeautifulSoup(page_read, 'html.parser')
-
-  with requests.Session() as session:
-      
-    # Parsing
-    response = session.get(power_cut_page)
-    soup = BeautifulSoup(response.content)
-
-    table_body = soup.find('table')
-    whole_table = table_body.find('tbody')
-    rows = whole_table.find_all('tr')
-    
-    data = []
-    for row in rows:
-        cols = row.find_all('p')
-        cols = [ele.text.strip() for ele in cols]
-        data.append(cols)
-    
-    with open('data/output.json', 'w') as filehandle:
-      json.dump(data, filehandle)
-
 #
 #----- Execute functions -----#
 #
@@ -369,6 +136,5 @@ def try_live_reports():
 # add_merge_to_database()
 # get_dataset()
 # get_flood_warnings()
-try_live_reports() # This function should be ran as a heartbeat (refreshing constantly)
 
 # pdb.set_trace()
