@@ -337,10 +337,10 @@ Read and parse text about relevant Live Reports from webpage.
 def try_live_reports():
   power_cut_page = 'https://www.ukpowernetworks.co.uk/power-cut/list'
 
-  # Allows the page to be opened, viewed and read by the programm
+  # Allows the page to be opened, viewed and read by the programm.
   page = urllib.request.urlopen(power_cut_page)
-  page_read = page.read()
-  soup = BeautifulSoup(page_read, 'html.parser')
+  pageRead = page.read()
+  soup = BeautifulSoup(pageRead, 'html.parser')
 
   with requests.Session() as session:
       
@@ -348,17 +348,35 @@ def try_live_reports():
     response = session.get(power_cut_page)
     soup = BeautifulSoup(response.content)
 
-    table_body = soup.find('table')
-    whole_table = table_body.find('tbody')
-    rows = whole_table.find_all('tr')
+    # Parsing only elements found in the table
+    tableBody = soup.find('table')
+    wholeTable = tableBody.find('tbody')
+    rows = wholeTable.find_all('tr')
     
+    # Extracting the first 6 <p> tags (which are the columns) in each row in the table.
     data = []
     for row in rows:
-        cols = row.find_all('p')
-        cols = [ele.text.strip() for ele in cols]
-        data.append(cols)
-    
-    with open('data/output.json', 'w') as filehandle:
+      cols = row.find_all('p')
+      cols = [ele.text.strip() for ele in cols]
+
+      # Seperate all the post codes in the string
+      # cols[1] = cols[1].split(',')
+
+      # Extract and store stripped version of each report's reference number,
+      # the reference number will be used as the Primary Key in the db.
+      referenceEle = cols[6].strip().split()
+      cols[6] = referenceEle[0]
+
+      # This element contains the amount of reported affected customers.
+      # Not sure if this data is necessary
+      # Converts element to an int() if it contains a value
+      if (cols[5] != '-'):
+        cols[5] = int(cols[5])
+      else:
+        cols[5] = 0
+      data.append(cols[:7])
+
+    with open('data/live_reports.json', 'w') as filehandle:
       json.dump(data, filehandle)
 
 #
