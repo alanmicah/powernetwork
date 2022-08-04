@@ -1,7 +1,7 @@
 """
 PowerNetworkapi.py created by Alan D 09/06/2022
 """
-import json, psycopg2, requests, urllib.request, nltk, datetime, faulthandler, pdb, gc, pickle, spacy
+import json, psycopg2, requests, urllib.request, datetime, faulthandler, pdb, gc, pickle, spacy, numpy
 from typing import final
 from os import path
 from urllib import response
@@ -335,44 +335,31 @@ def get_flood_warnings():
 Read and parse text about relevant Live Reports from webpage.
 """
 def try_live_reports():
-  quote_page = 'https://www.ukpowernetworks.co.uk/power-cut/list'
+  power_cut_page = 'https://www.ukpowernetworks.co.uk/power-cut/list'
 
   # Allows the page to be opened, viewed and read by the programm
-  page = urllib.request.urlopen(quote_page)
+  page = urllib.request.urlopen(power_cut_page)
   page_read = page.read()
   soup = BeautifulSoup(page_read, 'html.parser')
 
   with requests.Session() as session:
       
-    # Parsing parameters
-    response = session.get(quote_page)
+    # Parsing
+    response = session.get(power_cut_page)
     soup = BeautifulSoup(response.content)
 
-    # data = {
-    #     'data-value': 'TypeID_unplanned_power_cut',
-    # }
-
-    # Parsing data
-    response = session.post(quote_page)
-    soup = BeautifulSoup(response.content)
-    # Parsing all content selected within 'tr' tags
-    table_p_tags = soup.select('tr p')
-    # tsoup = soup.select('tr')
-    # # Write out the data to a json file  
-    # with open('data/try_live_reports.html', 'w') as file:
-    #   file.write(str(table_p_tags))
-
-    ## Tokenizing the text
-    article_text = ""
-    for para in table_p_tags:
-      article_text += para.text.strip() + " "
-    with open('data/article_text.txt', 'w') as file:
-      file.write(str(article_text))
+    table_body = soup.find('table')
+    whole_table = table_body.find('tbody')
+    rows = whole_table.find_all('tr')
     
-    # nlp = spacy.blank("en")
-    # article_doc = nlp(article_text)
-    # with open('data/doc.txt', 'w') as file:
-    #   file.write(str(article_doc))
+    data = []
+    for row in rows:
+        cols = row.find_all('p')
+        cols = [ele.text.strip() for ele in cols]
+        data.append(cols)
+    
+    with open('data/output.json', 'w') as filehandle:
+      json.dump(data, filehandle)
 
 #
 #----- Execute functions -----#
