@@ -33,7 +33,7 @@ def connect_database():
   try:
     #establishing the connection
     conn = psycopg2.connect(
-      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['database']
+      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['port']
     )
     #Creating a cursor object using the cursor() method
     cursor = conn.cursor()
@@ -62,7 +62,7 @@ def create_database_table():
   try:
     #establishing the connection
     conn = psycopg2.connect(
-      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['database']
+      database=connects[0]['database'], user=connects[0]['user'], password=connects[0]['password'], host=connects[0]['host'], port= connects[0]['port']
     )
     #Creating a cursor object using the cursor() method
     cursor = conn.cursor()
