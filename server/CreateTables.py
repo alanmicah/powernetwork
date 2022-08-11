@@ -172,4 +172,4 @@ def create_flood_report_table():
 
 
 #----- Execute functions ------#
-create_powercuts_table()
+# create_powercuts_table()

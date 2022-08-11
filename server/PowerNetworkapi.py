@@ -89,6 +89,7 @@ def add_merge_to_database():
 Retrieve data of primary sites from UK Power Networks based on a local authority.
 """
 def get_dataset():
+  # &county%3D%27Greater%20London%27
   params = '/geojson?where=local_authority%3D%27Tower%20Hamlets%27&limit=-1&offset=0&timezone=Europe%2FLondon'
   datasetID = 'grid-and-primary-sites/exports'
 

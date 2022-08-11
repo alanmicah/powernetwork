@@ -2,8 +2,9 @@
 main.py created by Alan D 04/08/2022
 """
 
-import json, psycopg2
+import json, psycopg2, sched, time
 from models import PowerCutReports
+from PowerCutReports import *
 
 # Terminal Commands
 # psql — PostgreSQL interactive terminal
@@ -11,6 +12,9 @@ from models import PowerCutReports
 # gc.disable()
 # gc.isenabled()
 # faulthandler.enable()
+
+# event_schedule = sched.scheduler(time.time, time.sleep)
+# schedule.every(1).minutes.do(func)
 
 """
 Working - Connect to the local database Postgres
@@ -42,6 +46,7 @@ def connect_database():
     #Closing the connection
     conn.close()
   except Exception as e:
+    print(e)
     print('Could not connect to database')
 
 connect_database()
