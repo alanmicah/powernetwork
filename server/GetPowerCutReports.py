@@ -4,13 +4,16 @@ PowerCutReports.py created by Alan D 04/08/2022
 Reads webapge and parses the relevant elements for the live report.
 This should be ran as a heartbeat (executing constantly every minute or so)
 """
-import json
+import json, datetime
+from extensions import db
+from models import PowerCutReports
 
 
 """
 Read and parse text about relevant Live Reports from webpage.
 """
 def try_live_reports():
+
   import requests, urllib.request
   from bs4 import BeautifulSoup
 
@@ -29,7 +32,7 @@ def try_live_reports():
       
     # Parsing
     response = session.get(power_cut_page)
-    soup = BeautifulSoup(response.content)
+    soup = BeautifulSoup(response.content, features='html.parser')
 
     # Parsing only elements found in the table
     tableBody = soup.find('table')
@@ -66,22 +69,13 @@ def try_live_reports():
       print(e)
       print('Failed to extract reports from the html table')
 
-  # Delete rows from before a certain date
-  # DELETE FROM table WHERE date < '2011-09-21 08:21:22';
-
-  # DELTE FROM table WHERE DATE(date_time) < DATE(NOW() - INTERVAL 10 DAY)
-
-  import datetime
-  from extensions import db
-  from models import PowerCutReports
-
   try:
     networkTable = db.session.query(PowerCutReports)
   except Exception as e:
     print(e)
     print('Failed to get from PowerCutReports')
     return 'Failure'
-
+    
   # features = getDataset()
   reportsJson = open('data/live_reports.json', 'r')
   eachReports = json.load(reportsJson)
@@ -121,6 +115,36 @@ def try_live_reports():
     db.session.close()  
 
 
+"""
+Delete rows from before a certain date
+"""
+def remove_old_reports():
+  # cutoff = (dt.date.today() - dt.timedelta(days=DAYS)).strftime('%Y-%m-%d')
+  # User.query.filter_by(date_added<=cutoff).delete()
+  # db.session.commit()
+  cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+  try:
+    # DELTE FROM table WHERE DATE(date_time) < DATE(NOW() - INTERVAL 7 DAY)
+    db.session.query(PowerCutReports).filter(PowerCutReports.lastupdate <= cutoff).delete()
+
+  except Exception as e:
+    print(e)
+    print('Failed to query remove old reports')
+
+  try:  
+    db.session.commit()
+    print('Success')
+  except Exception as e:
+    print(e)
+    print('Failed to commit session')
+  finally:
+    db.session.close()
+
+  # DELETE FROM table WHERE date < '2011-09-21 08:21:22';
+
+
 
 #-----Function calls-----#
+# This should be called once a day
+remove_old_reports()
 try_live_reports()

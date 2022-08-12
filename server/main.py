@@ -4,7 +4,6 @@ main.py created by Alan D 04/08/2022
 
 import json, psycopg2, sched, time
 from models import PowerCutReports
-from PowerCutReports import *
 
 # Terminal Commands
 # psql — PostgreSQL interactive terminal
