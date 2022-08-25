@@ -47,4 +47,5 @@ ENV/
 *.zip
 *.html
 *.jl
-*.DS_STORE
+**/.DS_Store
+server/chromedriver
