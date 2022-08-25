@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+import json
+from flask import Flask, render_template, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -20,6 +21,37 @@ db = SQLAlchemy(app)
 def index():
    return render_template("index.html")
 
+# if __name__=='__main__':
+#    app.debug=True
+# app.run()
+
+# @app.route('/')
+# def hello_world():
+#    return 'Hello Tutorialspoint'
+
+# @app.route('/getreports')
+# async def fetch_das_db():
+#    try_live_reports()
+#    # response = DASDBData().get_all()
+#    # logger.info("---ASYNCRONOUS----")
+#    # return (json.dumps(await response))
+
 if __name__=='__main__':
    app.debug=True
-app.run()
+   app.run(host='0.0.0.0')
+
+# @app.route('/')
+# def index(): pass
+
+# @app.route('/login')
+# def login(): pass
+
+# @app.route('/user/')
+# def profile(username): pass
+
+# with app.test_request_context():
+#     print( url_for('index'))
+#     print( url_for('index', _external=True))
+#     print( url_for('login'))
+#     print( url_for('login', next='/'))
+#     print( url_for('profile', username='Tutorials Point'))

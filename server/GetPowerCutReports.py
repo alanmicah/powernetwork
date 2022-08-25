@@ -2,20 +2,56 @@
 PowerCutReports.py created by Alan D 04/08/2022
 
 Reads webapge and parses the relevant elements for the live report.
-This should be ran as a heartbeat (executing constantly every minute or so)
+This script should be ran as a heartbeat (executing constantly every minute or so)
 """
-import json, datetime
+import asyncio, json, requests, urllib.request, datetime, time
 from extensions import db
 from models import PowerCutReports
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
+
+"""
+Render and parse dynamic page content
+"""
+def dynamic_reports():
+  try:
+    url = "https://www.ukpowernetworks.co.uk/power-cut/list"
+    
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver.get(url) 
+      
+    # this is just to ensure that the page is loaded
+    time.sleep(5) 
+      
+    html = driver.page_source
+    
+    # this renders the JS code and stores all
+    # of the information in static HTML code.
+
+    # Now, we could simply apply bs4 to html variable
+    soup = BeautifulSoup(html, "html.parser")
+
+    savePage = soup.contents
+
+    with open('data/ReportsRender.html', 'w', encoding='utf-8') as f:
+      f.write(str(soup))
+
+  except Exception as e:
+    print(e)
+    print('Failed to render webpage')
 
 
 """
 Read and parse text about relevant Live Reports from webpage.
 """
-def try_live_reports():
-
-  import requests, urllib.request
-  from bs4 import BeautifulSoup
+"""
+!!!!!!!!!! Not working !!!!!!!!!!!!
+"""
+def try_live_reports(): # !!! Not working !!!
 
   try:
     power_cut_page = 'https://www.ukpowernetworks.co.uk/power-cut/list'
@@ -34,10 +70,15 @@ def try_live_reports():
     response = session.get(power_cut_page)
     soup = BeautifulSoup(response.content, features='html.parser')
 
-    # Parsing only elements found in the table
-    tableBody = soup.find('table')
-    wholeTable = tableBody.find('tbody')
-    rows = wholeTable.find_all('tr')
+    try:
+      # Parsing only elements found in the table
+      tableBody = soup.find('table')
+      wholeTable = tableBody.find('tbody')
+      rows = wholeTable.find_all('tr')
+      
+    except Exception as e:
+      print(e)
+      print('Unable to find table body')
 
     try:
       # Extracting the first 6 <p> tags (which are the columns) in each row in the table.
@@ -75,11 +116,11 @@ def try_live_reports():
     print(e)
     print('Failed to get from PowerCutReports')
     return 'Failure'
-    
+
   # features = getDataset()
   reportsJson = open('data/live_reports.json', 'r')
   eachReports = json.load(reportsJson)
-  
+
   try:
     for items in eachReports:
         powercutreports = PowerCutReports()
@@ -119,14 +160,10 @@ def try_live_reports():
 Delete rows from before a certain date
 """
 def remove_old_reports():
-  # cutoff = (dt.date.today() - dt.timedelta(days=DAYS)).strftime('%Y-%m-%d')
-  # User.query.filter_by(date_added<=cutoff).delete()
-  # db.session.commit()
   cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
   try:
     # DELTE FROM table WHERE DATE(date_time) < DATE(NOW() - INTERVAL 7 DAY)
     db.session.query(PowerCutReports).filter(PowerCutReports.lastupdate <= cutoff).delete()
-
   except Exception as e:
     print(e)
     print('Failed to query remove old reports')
@@ -140,11 +177,9 @@ def remove_old_reports():
   finally:
     db.session.close()
 
-  # DELETE FROM table WHERE date < '2011-09-21 08:21:22';
 
-
-
+###
 #-----Function calls-----#
-# This should be called once a day
-remove_old_reports()
-try_live_reports()
+# remove_old_reports()
+# try_live_reports()
+dynamic_reports()
