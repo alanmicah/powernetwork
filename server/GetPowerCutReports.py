@@ -9,36 +9,45 @@ This script should be ran as a heartbeat (executing constantly every minute or s
 Referencings
 [1]https://www.geeksforgeeks.org/scrape-content-from-dynamic-websites/
 """
-import asyncio, json, requests, urllib.request, datetime, time
+import json, requests, urllib.request, datetime, time
 from extensions import db
 from models import PowerCutReports
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+
 
 
 """
 Render and parse dynamic page content
 """
 def get_dynamic_reports():
-  #[1]
   try:
     url = "https://www.ukpowernetworks.co.uk/power-cut/list"
-    
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+
+    # Run Chrome in a headless/server environment. Doesn't have a visible UI shell.
+    options = Options()
+    options.headless = True
+    # options.add_argument("no-sandbox")
+    # options.add_argument("--disable-gpu")
+    # options.add_argument("--disable-dev-shm-usage")
+
+    # [1]
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=options)
     driver.get(url) 
-      
-    # this is just to ensure that the page is loaded
-    # time.sleep(0) 
+    
+    # this is just to ensure that the page is loaded.
+    time.sleep(5)
   
     html = driver.page_source
     
-    # this renders the JS code and stores all
+    # this renders the JS code and stores all.
     # of the information in static HTML code.
 
-    # Now, we could simply apply bs4 to html variable
+    # Now, we could simply apply bs4 to html variable.
     soup = BeautifulSoup(html, "html.parser")
 
     # savePage = soup.contents
@@ -61,16 +70,17 @@ def get_dynamic_reports():
 
     for row in textBody:
       cols = row.find_all('p')
-      # Not all necessary text are found in <p>
-      postcodes = row.find("div", {"class": "PowerCutListItem_PowerCutPostcodes__xlT_j"})
-      affected = row.find("div", {"class": "PowerCutListItem_PowerCutCustomers__UUhFc"})
-      
+      # Not all the necessary text are found only in <p> tags
+      postcodes = row.find("div", class_="PowerCutListItem_PowerCutPostcodes__xlT_j")
+      affected = row.find("div", class_="PowerCutListItem_PowerCutCustomers__UUhFc")
+      #postcodes = row.find("div", {"class": "PowerCutListItem_PowerCutPostcodes__xlT_j"})
+
       cols = [ele.text.strip() for ele in cols]
       postcodes = [ele.text.strip() for ele in postcodes]
       affected = [ele.text.strip() for ele in affected]
       
       # This element contains the amount of reported affected customers,
-      # Converts element to an int() if it contains a value
+      # Converts element to an int()
       if (affected[1] != '-'):
         affected[1] = int(affected[1])
       else:
@@ -79,8 +89,8 @@ def get_dynamic_reports():
       cols = cols + postcodes + affected
       
       # Each element in 'unwanted' is used as an index of elements
-      # Remove unnecessary elements at each index position found in 'unwanted'
       unwanted = [0,2,3,7,8,10,12]
+      # Remove unnecessary elements at each index position found in 'unwanted'
       for ele in sorted(unwanted, reverse = True):
         del cols[ele]
       
@@ -273,6 +283,7 @@ def remove_old_reports():
 
 ###
 #-----Function calls-----#
-remove_old_reports()
 # try_live_reports()
 get_dynamic_reports()
+remove_old_reports()
+
