@@ -1,5 +1,5 @@
 """
-PowerNetworkapi.py created by Alan D 09/06/2022
+power_network.py created by Alan D 09/06/2022
 """
 import json, requests, datetime, faulthandler, pdb, gc, pickle, spacy, numpy
 from typing import final
