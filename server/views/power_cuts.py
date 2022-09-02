@@ -9,7 +9,7 @@ This script should be ran as a heartbeat (executing constantly every minute or s
 Referencings
 [1]https://www.geeksforgeeks.org/scrape-content-from-dynamic-websites/
 """
-import json, requests, urllib.request, datetime, time, sched
+import json, requests, urllib.request, datetime, sched, time
 from extensions import db
 from models import PowerCutReports
 from bs4 import BeautifulSoup
@@ -134,15 +134,6 @@ def get_reports():
     db.session.rollback()
     print(e)
     print('Failed to upload Power Cut Reports')
-
-  # Remove 7 day old reports
-  cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
-  try:
-    # DELTE FROM table WHERE DATE(date_time) < DATE(NOW() - INTERVAL 7 DAY)
-    db.session.query(PowerCutReports).filter(PowerCutReports.lastupdate <= cutoff).delete()
-  except Exception as e:
-    print(e)
-    print('Failed to query remove old reports')
   
   try:
     db.session.commit()

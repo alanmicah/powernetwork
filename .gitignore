@@ -50,3 +50,4 @@ ENV/
 *.jl
 **/.DS_Store
 server/chromedriver
+__init__.py
