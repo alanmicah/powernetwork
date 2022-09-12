@@ -1,10 +1,13 @@
-import asyncio, os, json, datetime, time
+import asyncio, os, json, datetime, re, time
 
 from extensions import db
 from models import PowerCutReports
 
 from prefect import flow, task
 from prefect.task_runners import SequentialTaskRunner
+from prefect.blocks.system import JSON
+
+# Terminal command: prefect orion start
 
 """
 Render and parse dynamic page content for power cut reports
@@ -12,6 +15,7 @@ Render and parse dynamic page content for power cut reports
 @task(retries=3)
 def get_reports():
   from bs4 import BeautifulSoup
+  from datetime import date
   from selenium import webdriver
   from selenium.webdriver.chrome.service import Service
   from selenium.webdriver.chrome.options import Options
@@ -70,6 +74,15 @@ def get_reports():
       cols = [ele.text.strip() for ele in cols]
       postcodes = [ele.text.strip() for ele in postcodes]
       affected = [ele.text.strip() for ele in affected]
+
+      # skips report if year is older than current year
+      check_year = cols[6].split()[-1:][0]
+
+      if check_year.isdigit():
+        # match = re.match(r'.*([1-3][0-9]{3})', l)  
+        current_year = date.today().year
+        if(int(check_year) < current_year):
+          continue
       
       # This element contains the amount of reported affected customers,
       # Converts element to an int()
@@ -87,6 +100,10 @@ def get_reports():
         del cols[ele]
       
       data.append(cols)
+
+    # json_block = JSON(value=data)
+    # json_block.save(name="power_reports")
+
     with open('data/live_reports.json', 'w') as filehandle:
       json.dump(data, filehandle)
         
@@ -94,6 +111,10 @@ def get_reports():
     print(e)
     print('Unable to extract <p> columns')
 
+
+
+@task
+def upload_reports():
   # Upload retrieved data in json file to database
   try:
     networkTable = db.session.query(PowerCutReports)
@@ -104,6 +125,9 @@ def get_reports():
   
   reportsJson = open('data/live_reports.json', 'r')
   eachReports = json.load(reportsJson)
+
+  # json_block = JSON.load("power_reports")
+  # print(json_block.value([1]))
 
   try:
     for items in eachReports:
@@ -140,6 +164,7 @@ def get_reports():
     db.session.close()
 
 
+
 """
 Delete rows from before a certain date
 """
@@ -174,7 +199,8 @@ flow
       version=os.getenv("GIT_COMMIT_SHA"))
 def update_reports():
   get_reports.submit()
-  remove_old_reports.submit()
+  upload_reports.submit()
+  # remove_old_reports.submit()
 
 
 if __name__ == "__main__":

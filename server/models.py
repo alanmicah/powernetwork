@@ -6,7 +6,7 @@ from extensions import db
 
 class PowerStations(db.Model):
   """Power Stations"""
-  __tablename__='stations'
+  __tablename__='power_stations'
   sitefunctionallocation = db.Column(db.VARCHAR, primary_key=True)
   licencearea = db.Column(db.Text)
   sitename = db.Column(db.Text)
@@ -53,7 +53,7 @@ class FloodReports(db.Model):
   """Flood Reports"""
   __tablename__='flood_reports'
   id = db.Column(db.Text, nullable=False, primary_key=True)
-  county = db.Column(db.Text, db.ForeignKey('stations.county'))
+  county = db.Column(db.Text, db.ForeignKey('power_stations.county'))
   description = db.Column(db.Text)
   eaAreaName = db.Column(db.Text)
   envelope = db.Column(db.VARCHAR)

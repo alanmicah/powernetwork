@@ -13,6 +13,7 @@ import json, requests, urllib.request, datetime, sched, time
 from extensions import db
 from models import PowerCutReports
 from bs4 import BeautifulSoup
+from datetime import date
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
@@ -20,7 +21,6 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 schedulerTest = sched.scheduler(time.time, time.sleep)
-
 """
 Render and parse dynamic page content for power cut reports
 """
@@ -78,6 +78,15 @@ def get_reports():
       cols = [ele.text.strip() for ele in cols]
       postcodes = [ele.text.strip() for ele in postcodes]
       affected = [ele.text.strip() for ele in affected]
+
+      # skips report if year is older than current year
+      check_year = cols[6].split()[-1:][0]
+
+      if check_year.isdigit():
+        # match = re.match(r'.*([1-3][0-9]{3})', l)  
+        current_year = date.today().year
+        if(int(check_year) < current_year):
+          continue
       
       # This element contains the amount of reported affected customers,
       # Converts element to an int()
@@ -112,6 +121,8 @@ def get_reports():
   
   reportsJson = open('data/live_reports.json', 'r')
   eachReports = json.load(reportsJson)
+
+  print(eachReports)
 
   try:
     for items in eachReports:
@@ -263,27 +274,37 @@ def try_live_reports(): # !!! Not working !!!
 Delete rows from before a certain date
 """
 def remove_old_reports():
-  cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
   try:
-    # DELTE FROM table WHERE DATE(date_time) < DATE(NOW() - INTERVAL 7 DAY)
-    db.session.query(PowerCutReports).filter(PowerCutReports.lastupdate <= cutoff).delete()
+    networkTable = db.session.query(PowerCutReports)
   except Exception as e:
     print(e)
-    print('Failed to query remove old reports')
+    print('Failed to get from PowerCutReports')
+    return 'Failure'
+  
+  if networkTable is not None:
+    cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+    try:
+      # DELTE FROM table WHERE DATE(date_time) < DATE(NOW() - INTERVAL 7 DAY)
+      db.session.query(PowerCutReports).filter(PowerCutReports.lastupdate <= cutoff).delete()
+    except Exception as e:
+      print(e)
+      print('Failed to query remove old reports')
 
-  try:  
-    db.session.commit()
-    print('Success')
-  except Exception as e:
-    print(e)
-    print('Failed to commit session')
-  finally:
-    db.session.close()
+    try:  
+      db.session.commit()
+      print('Successfully removed old reports')
+    except Exception as e:
+      print(e)
+      print('Failed to commit session')
+    finally:
+      db.session.close()
+  else:
+    return 'table is empty'
 
 
 ###
 #-----Function calls-----#
 # try_live_reports()
-# get_reports()
+get_reports()
 # remove_old_reports()
 

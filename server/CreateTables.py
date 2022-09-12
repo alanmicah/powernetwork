@@ -21,12 +21,12 @@ def create_powerstations_table():
     cursor = conn.cursor()
 
     #Executing an MYSQL function using the execute() method
-    cursor.execute("DROP TABLE IF EXISTS STATIONS, STATIONS")
+    cursor.execute("DROP TABLE IF EXISTS POWER_STATIONS, POWER_STATIONS")
 
     #Creating table as per requirement
     commands= (
       """
-      CREATE TABLE STATIONS
+      CREATE TABLE POWER_STATIONS
         (
         sitefunctionallocation VARCHAR PRIMARY KEY,
         licencearea VARCHAR,
@@ -173,3 +173,4 @@ def create_flood_report_table():
 
 #----- Execute functions ------#
 # create_powercuts_table()
+# create_powerstations_table()

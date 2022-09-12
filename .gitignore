@@ -51,3 +51,5 @@ ENV/
 **/.DS_Store
 server/chromedriver
 __init__.py
+*.tar
+*.tar.bz2
