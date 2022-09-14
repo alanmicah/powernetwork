@@ -25,7 +25,7 @@ class PowerStations(db.Model):
   towncity = db.Column(db.Text)
   county = db.Column(db.Text, db.ForeignKey('flood_reports.county'))
   postcode = db.Column(db.Text)
-  yearcommissioned = db.Column(db.Integer)
+  yearcommissioned = db.Column(db.VARCHAR)
   datecommissioned = db.Column(db.Date)
   siteclassification = db.Column(db.Text)
   assessmentdate = db.Column(db.Date)

@@ -46,7 +46,7 @@ def create_powerstations_table():
         towncity TEXT,
         county VARCHAR,
         postcode VARCHAR,
-        yearcommissioned INT,
+        yearcommissioned VARCHAR,
         datecommissioned DATE,
         siteclassification TEXT,
         assessmentdate DATE,

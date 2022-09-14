@@ -88,7 +88,7 @@ def get_reports():
         if(int(check_year) < current_year):
           continue
       
-      # This element contains the amount of reported affected customers,
+      # This element contains the amount of user reports,
       # Converts element to an int()
       if (affected[1] != '-'):
         affected[1] = int(affected[1])

@@ -12,6 +12,49 @@ from models import PowerStations
 # gc.isenabled()
 # faulthandler.enable()
 
+"""
+Retrieve data of primary sites from UK Power Networks based on a local authority.
+"""
+def get_dataset():
+  # &county%3D%27Greater%20London%27
+  params = '/geojson?where=local_authority%3D%27Tower%20Hamlets%27&limit=-1&offset=0&timezone=Europe%2FLondon'
+  datasetID = 'grid-and-primary-sites/exports'
+
+  #Try to request from the api, if successful then attempt to retrieve data from api request
+  try:
+    response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/' + datasetID + params, timeout=3)
+    # response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2')
+    print(str(response))
+  except Exception as e:
+    print('Query failed')
+    print(response.status_code)
+    return None
+
+  if response.status_code != 200:
+    try:
+      response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/' + datasetID + params, timeout=3)
+      # response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2')
+      print(str(response))
+    except Exception as e:
+      print('Query failed')
+      print(response.status_code)
+      return None
+
+  #If the response from the request is 200 then retrieve data
+  if response.status_code == 200:
+    data = response.json()
+    if("features" in data.keys()):
+      features = data['features']
+
+      #Write out the data to a json file  
+      with open('data/Powergrids.json', 'w') as f:
+        json.dump(features, f)
+
+      if len(features) >0:
+        return features
+      else:
+        return None
+
 
 """
 Insert data into database table 
@@ -85,57 +128,13 @@ def add_merge_to_database():
     db.session.close()
 
 
-"""
-Retrieve data of primary sites from UK Power Networks based on a local authority.
-"""
-def get_dataset():
-  # &county%3D%27Greater%20London%27
-  params = '/geojson?where=local_authority%3D%27Tower%20Hamlets%27&limit=-1&offset=0&timezone=Europe%2FLondon'
-  datasetID = 'grid-and-primary-sites/exports'
-
-  #Try to request from the api, if successful then attempt to retrieve data from api request
-  try:
-    response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/' + datasetID + params, timeout=3)
-    # response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2')
-    print(str(response))
-  except Exception as e:
-    print('Query failed')
-    print(response.status_code)
-    return None
-
-  if response.status_code != 200:
-    try:
-      response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2/catalog/datasets/' + datasetID + params, timeout=3)
-      # response = requests.get('https://ukpowernetworks.opendatasoft.com/api/v2')
-      print(str(response))
-    except Exception as e:
-      print('Query failed')
-      print(response.status_code)
-      return None
-
-  #If the response from the request is 200 then retrieve data
-  if response.status_code == 200:
-    data = response.json()
-    if("features" in data.keys()):
-      features = data['features']
-
-      #Write out the data to a json file  
-      with open('data/Powergrids.json', 'w') as f:
-        json.dump(features, f)
-
-      if len(features) >0:
-        return features
-      else:
-        return None
-
-
 #
 #----- Execute functions -----#
 #
 # connect_database()
 # create_database_table()
-# add_merge_to_database()
-# get_dataset()
+get_dataset()
+add_merge_to_database()
 # get_flood_warnings()
 
 # pdb.set_trace()
