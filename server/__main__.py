@@ -1,4 +1,5 @@
 import asyncio, os, json, datetime, re, time
+from datetime import date
 
 from extensions import db
 from models import PowerCutReports
@@ -7,15 +8,16 @@ from prefect import flow, task
 from prefect.task_runners import SequentialTaskRunner
 from prefect.blocks.system import JSON
 
+import power_cuts
+
 # Terminal command: prefect orion start
 
 """
 Render and parse dynamic page content for power cut reports
 """
 @task(retries=3)
-def get_reports():
+def render_reports():
   from bs4 import BeautifulSoup
-  from datetime import date
   from selenium import webdriver
   from selenium.webdriver.chrome.service import Service
   from selenium.webdriver.chrome.options import Options
@@ -27,6 +29,7 @@ def get_reports():
     # Run Chrome in a headless/server environment. Won't open a browser window.
     options = Options()
     options.headless = True
+    # Uncomment options if needed to run on your machine
     # options.add_argument("no-sandbox")
     # options.add_argument("--disable-gpu")
     # options.add_argument("--disable-dev-shm-usage")
@@ -47,15 +50,22 @@ def get_reports():
     soup = BeautifulSoup(html, "html.parser")
 
     # savePage = soup.contents
+    return soup
 
   except Exception as e:
-    print(e)
     print('Failed to render webpage')
-  
+    print(e)
+    return None
+
+
+
+@task(description="This task renders and data scrapes webpage")
+def get_reports():
+  soup = render_reports.fn()
   try:
     # Parsing only elements found in the table div class
-    tableBody = soup.find("div", {"class": "PowerCutList_PowerCutListWrapper__dy74M"})
-    textBody = tableBody.find_all("div", {"class": "PowerCutListItem_PowerCutListItem__AzYtO"})
+    # tableBody = soup.find("div", {"class": "PowerCutList_PowerCutListWrapper__dy74M"})
+    textBody = soup.find_all("div", {"class": "PowerCutListItem_PowerCutListItem__AzYtO"})
     
   except Exception as e:
     print(e)
@@ -66,16 +76,10 @@ def get_reports():
 
     for row in textBody:
       cols = row.find_all('p')
-      # Not all the necessary text are found only in <p> tags
-      postcodes = row.find("div", class_="PowerCutListItem_PowerCutPostcodes__xlT_j")
-      affected = row.find("div", class_="PowerCutListItem_PowerCutCustomers__UUhFc")
       #postcodes = row.find("div", {"class": "PowerCutListItem_PowerCutPostcodes__xlT_j"})
-
       cols = [ele.text.strip() for ele in cols]
-      postcodes = [ele.text.strip() for ele in postcodes]
-      affected = [ele.text.strip() for ele in affected]
 
-      # skips report if year is older than current year
+      # skips report if year is earlier than current year
       check_year = cols[6].split()[-1:][0]
 
       if check_year.isdigit():
@@ -83,15 +87,22 @@ def get_reports():
         current_year = date.today().year
         if(int(check_year) < current_year):
           continue
-      
+
+      # Not all the necessary text are found only in <p> tags
+      # Would it be better seperate these lines of code?
+      # postcodes = row.find("div", class_="PowerCutListItem_PowerCutPostcodes__xlT_j")
+      affected = row.find("div", class_="PowerCutListItem_PowerCutCustomers__UUhFc")
+      # Strip postcodes and amount of customer reports
+      cols += [ele.text.strip() for ele in row.find("div", class_="PowerCutListItem_PowerCutPostcodes__xlT_j")]
+      affected = [ele.text.strip() for ele in affected]
+
       # This element contains the amount of reported affected customers,
-      # Converts element to an int()
-      if (affected[1] != '-'):
+      # Converts element to type int
+      if affected[1].isdigit():
         affected[1] = int(affected[1])
       else:
         affected[1] = 0
-      
-      cols = cols + postcodes + affected
+      cols += affected
       
       # Each element in 'unwanted' is used as an index of elements
       unwanted = [0,2,3,7,8,10,12]
@@ -100,9 +111,6 @@ def get_reports():
         del cols[ele]
       
       data.append(cols)
-
-    # json_block = JSON(value=data)
-    # json_block.save(name="power_reports")
 
     with open('data/live_reports.json', 'w') as filehandle:
       json.dump(data, filehandle)
@@ -113,7 +121,7 @@ def get_reports():
 
 
 
-@task
+@task(description="This task uploads reports to database")
 def upload_reports():
   # Upload retrieved data in json file to database
   try:
@@ -123,7 +131,7 @@ def upload_reports():
     print('Failed to get from PowerCutReports')
     return 'Failure'
   
-  reportsJson = open('data/live_reports.json', 'r')
+  reportsJson = open('data/live_reports.json', 'r') 
   eachReports = json.load(reportsJson)
 
   # json_block = JSON.load("power_reports")
@@ -168,7 +176,7 @@ def upload_reports():
 """
 Delete rows from before a certain date
 """
-@task
+@task(description="This task removes reports past a certain date")
 def remove_old_reports():
   cutoff = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
   # powerType = "Restored power cut"
@@ -194,12 +202,16 @@ def remove_old_reports():
 flow
 """
 @flow(name="update reports",
-      task_runner=SequentialTaskRunner(),
+      # task_runner=SequentialTaskRunner(),
       description="Render and parse dynamic page content for power cut reports, and also remove old reports",
       version=os.getenv("GIT_COMMIT_SHA"))
 def update_reports():
-  get_reports.submit()
-  upload_reports.submit()
+  # soup = render_reports().sumbit()
+  # get_reports.submit(soup)
+  # upload_reports.submit()
+  # render_reports()
+  get_reports()
+  upload_reports()
   # remove_old_reports.submit()
 
 

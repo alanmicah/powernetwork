@@ -42,7 +42,6 @@ venv/
 ENV/
 
 *tutorial/
-*client/
 *data/
 *.json
 *.zip
@@ -53,3 +52,48 @@ server/chromedriver
 __init__.py
 *.tar
 *.tar.bz2
+*.cfg
+
+# React
+# dependencies
+node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# scripts/flow/*/.flowconfig
+# .flowconfig
+# *~
+# .grunt
+# _SpecRunner.html
+# __benchmarks__
+# build/
+# remote-repo/
+# coverage/
+# .module-cache
+# fixtures/dom/public/react-dom.js
+# fixtures/dom/public/react.js
+# test/the-files-to-test.generated.js
+# *.log*
+# chrome-user-data
+# .idea
+# *.iml
+# .vscode
+# *.swp
+# *.swo

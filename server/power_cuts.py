@@ -58,6 +58,7 @@ def get_reports():
   
   try:
     # Parsing only elements found in the table div class
+    # First soup.find might not be needed
     tableBody = soup.find("div", {"class": "PowerCutList_PowerCutListWrapper__dy74M"})
     textBody = tableBody.find_all("div", {"class": "PowerCutListItem_PowerCutListItem__AzYtO"})
     
@@ -70,24 +71,28 @@ def get_reports():
 
     for row in textBody:
       cols = row.find_all('p')
-      # Not all the necessary text are found only in <p> tags
-      postcodes = row.find("div", class_="PowerCutListItem_PowerCutPostcodes__xlT_j")
-      affected = row.find("div", class_="PowerCutListItem_PowerCutCustomers__UUhFc")
       #postcodes = row.find("div", {"class": "PowerCutListItem_PowerCutPostcodes__xlT_j"})
 
+      # Remove the html syntax
       cols = [ele.text.strip() for ele in cols]
-      postcodes = [ele.text.strip() for ele in postcodes]
-      affected = [ele.text.strip() for ele in affected]
 
-      # skips report if year is older than current year
+      # Stores the year from the string
       check_year = cols[6].split()[-1:][0]
-
+      #match = re.match(r'.*([1-3][0-9]{3})', l)  
+      
+      # Skips report if year reported is before current year
       if check_year.isdigit():
-        # match = re.match(r'.*([1-3][0-9]{3})', l)  
         current_year = date.today().year
         if(int(check_year) < current_year):
           continue
       
+      # Not all the necessary text are found only in <p> tags
+      postcodes = row.find("div", class_="PowerCutListItem_PowerCutPostcodes__xlT_j")
+      affected = row.find("div", class_="PowerCutListItem_PowerCutCustomers__UUhFc")
+      # Remove the html syntax
+      postcodes = [ele.text.strip() for ele in postcodes]
+      affected = [ele.text.strip() for ele in affected]
+
       # This element contains the amount of user reports,
       # Converts element to an int()
       if (affected[1] != '-'):
@@ -121,8 +126,6 @@ def get_reports():
   
   reportsJson = open('data/live_reports.json', 'r')
   eachReports = json.load(reportsJson)
-
-  print(eachReports)
 
   try:
     for items in eachReports:

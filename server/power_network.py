@@ -133,8 +133,8 @@ def add_merge_to_database():
 #
 # connect_database()
 # create_database_table()
-get_dataset()
-add_merge_to_database()
+# get_dataset()
+# add_merge_to_database()
 # get_flood_warnings()
 
 # pdb.set_trace()
