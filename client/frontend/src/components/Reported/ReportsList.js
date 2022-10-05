@@ -14,6 +14,9 @@ function ReportsList(props) {
           type={report.type}
           postcodes={report.postcodes}
           restore={report.restoretime}
+          information={report.information}
+          starttime={report.starttime}
+          reports={report.reports}
         />
       ))}
     </ul>

@@ -11,7 +11,7 @@ function Reports(props) {
   return (
     <Card className='reports'>
       {/* controlled custom component */}
-      <ReportsList items={props.allReports} />
+      <ReportsList items={props.items} />
     </Card>
   );
 }
