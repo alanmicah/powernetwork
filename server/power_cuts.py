@@ -1,7 +1,7 @@
 """
 power_cuts.py created by Alan D 04/08/2022
 
-Reads webapge and parses the relevant elements for the live report.
+Reads, renders and parses webpage for live power cut reports.
 This script should be ran as a heartbeat (executing constantly every minute or so)
 """
 
@@ -15,7 +15,7 @@ from models import PowerCutReports
 from bs4 import BeautifulSoup
 from datetime import date
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
@@ -39,7 +39,7 @@ def get_reports():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=options)
     driver.get(url) 
     
-    # this is just to ensure that the page is loaded.
+    # this is just to ensure that the page has the time to fully load/render.
     time.sleep(5)
   
     html = driver.page_source

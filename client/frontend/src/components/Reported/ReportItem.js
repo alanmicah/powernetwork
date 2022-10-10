@@ -8,6 +8,7 @@ const ReportItem = (props) => {
       <Card className='report-item'>
         {/* <ReportDate date={props.date} /> */}
         <div className='report-item__description'>
+          <h2>{props.starttime}</h2>
           <h2>{props.postcodes}</h2>
           <div className='report-item__price'>{props.type}</div>
           <h3>{props.restore}</h3>
