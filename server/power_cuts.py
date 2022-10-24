@@ -5,10 +5,7 @@ Reads, renders and parses webpage for live power cut reports.
 This script should be ran as a heartbeat (executing constantly every minute or so)
 """
 
-"""
-Referencings
-[1]https://www.geeksforgeeks.org/scrape-content-from-dynamic-websites/
-"""
+
 import json, requests, urllib.request, datetime, sched, time
 from extensions import db
 from models import PowerCutReports
@@ -26,7 +23,9 @@ Render and parse dynamic page content for power cut reports
 """
 def get_reports():
   try:
-    url = "https://www.ukpowernetworks.co.uk/power-cut/list"
+    urlsJson = open('data/urls.json', 'r')
+    urls = json.load(urlsJson)
+    url = urls[0]["powercuts"]
 
     # Run Chrome in a headless/server environment. Won't open a browser window.
     options = Options()
@@ -35,7 +34,7 @@ def get_reports():
     # options.add_argument("--disable-gpu")
     # options.add_argument("--disable-dev-shm-usage")
 
-    # [1]
+    # driver = webdriver.Chrome(service=Service('/Users/alanmicah/build/powernetwork/server/drivers/chromedriver'), options=options)
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=options)
     driver.get(url) 
     
@@ -92,6 +91,7 @@ def get_reports():
       # Remove the html syntax
       postcodes = [ele.text.strip() for ele in postcodes]
       affected = [ele.text.strip() for ele in affected]
+      # retrieved = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
       # This element contains the amount of user reports,
       # Converts element to an int()
@@ -111,17 +111,16 @@ def get_reports():
       data.append(cols)
     with open('data/live_reports.json', 'w') as filehandle:
       json.dump(data, filehandle)
-        
+    print('Success') 
   except Exception as e:
     print(e)
-    print('Unable to extract <p> columns')
 
+def upload_reports():
   # Upload retrieved data in json file to database
   try:
     networkTable = db.session.query(PowerCutReports)
   except Exception as e:
     print(e)
-    print('Failed to get from PowerCutReports')
     return 'Failure'
   
   reportsJson = open('data/live_reports.json', 'r')
@@ -129,20 +128,20 @@ def get_reports():
 
   try:
     for items in eachReports:
-        powercutreports = PowerCutReports()
-        powercutreports.id = items[4]
-        powercutreports.type = items[0]
-        powercutreports.postcodes = items[5]
-        powercutreports.restoretime = items[1]
-        powercutreports.information = items[2]
-        powercutreports.starttime = items[3]
-        powercutreports.reports = items[6]
-        powercutreports.lastupdate = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+      powercutreports = PowerCutReports()
+      powercutreports.id = items[4]
+      powercutreports.type = items[0]
+      powercutreports.postcodes = items[5]
+      powercutreports.restoretime = items[1]
+      powercutreports.information = items[2]
+      powercutreports.starttime = items[3]
+      powercutreports.reports = items[6]
+      powercutreports.lastupdate = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        if networkTable is not None:
-          db.session.merge(powercutreports)
-        else:
-          db.session.add(powercutreports)
+      if networkTable is not None:
+        db.session.merge(powercutreports)
+      else:
+        db.session.add(powercutreports)
 
   except Exception as e:
     db.session.rollback()
@@ -307,7 +306,7 @@ def remove_old_reports():
 
 ###
 #-----Function calls-----#
-# try_live_reports()
 get_reports()
+upload_reports()
 # remove_old_reports()
 
