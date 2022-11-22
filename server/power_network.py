@@ -2,6 +2,7 @@
 power_network.py created by Alan D 09/06/2022
 """
 import json, requests, datetime, faulthandler, pdb, gc, pickle, spacy, numpy
+from dataclasses import dataclass
 from typing import final
 from os import path
 from urllib import response
@@ -11,6 +12,37 @@ from models import PowerStations
 # gc.disable()
 # gc.isenabled()
 # faulthandler.enable()
+
+@dataclass(frozen=True)
+class Networks:
+  sitefunctionallocation: vars
+  licencearea: str
+  sitename: str
+  sitetype: str
+  sitevoltage: int
+  esqcroverallrisk: str
+  gridref: str
+  siteassetcount: int
+  powertransformercount: int
+  electricalassetcount: int
+  civilassetcount: int
+  longitude: float
+  latitude: float
+  street: str
+  suburb: str
+  towncity: str
+  county: str
+  postcode: str
+  yearcommissioned: vars
+  datecommissioned: datetime
+  siteclassification: str
+  assessmentdate: datetime
+  last_report: str
+  calculatedresistance: str
+  measuredresistance_ohm: float
+  next_assessmentdate: datetime
+  local_authority: str
+  local_authority_code : str
 
 """
 Retrieve data of primary sites from UK Power Networks based on a local authority.

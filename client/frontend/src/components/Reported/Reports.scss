@@ -1,7 +1,14 @@
+// .reports {
+//   padding: 1rem;
+//   background-color: rgb(31, 31, 31);
+//   margin: 2rem auto;
+//   width: 50rem;
+//   max-width: 95%;
+// }
 .reports {
-  padding: 1rem;
-  background-color: rgb(31, 31, 31);
-  margin: 2rem auto;
-  width: 50rem;
-  max-width: 95%;
+  border-radius: var(--card-border-radius);
+  width: 950px;
+  background: white;
+  padding: var(--card-padding);
+  box-shadow: var(--box-shadow);
 }

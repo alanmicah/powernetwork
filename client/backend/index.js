@@ -1,9 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const knex = require('knex');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const knex = require("knex");
+require("dotenv").config();
 const db = knex({
-  client: 'pg',
+  client: "pg",
   connection: {
     host: process.env.DATABASE_HOST,
     user: process.env.DATABASE_USERNAME,
@@ -17,9 +17,9 @@ app.use(express.json());
 // CORS implemented so that we don't get errors when trying to access the server from a different server location
 app.use(cors());
 // GET: Fetch all movies from the database
-app.get('/', (req, res) => {
-  db.select('*')
-    .from('power_cut_reports')
+app.get("/", (req, res) => {
+  db.select("*")
+    .from("power_cut_reports")
     .then((data) => {
       console.log(data);
       res.json(data);
