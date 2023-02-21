@@ -20,6 +20,65 @@ from webdriver_manager.chrome import ChromeDriverManager
 schedulerTest = sched.scheduler(time.time, time.sleep)
 
 """
+Parse table content for power cut reports
+"""
+def get_reports_tbody():
+    try:
+        urlsJson = open('data/urls.json', 'r')
+        urls = json.load(urlsJson)
+        url = urls[0]["powercuts"]
+
+        # Run Chrome in a headless/server environment. Won't open a browser window.
+        options = Options()
+        options.headless = True
+        # options.add_argument("no-sandbox")
+        # options.add_argument("--disable-gpu")
+        # options.add_argument("--disable-dev-shm-usage")
+
+        # driver = webdriver.Chrome(service=Service('/Users/alanmicah/build/powernetwork/server/drivers/chromedriver'), options=options)
+        driver = webdriver.Chrome(service=Service(
+            ChromeDriverManager().install()), options=options)
+        driver.get(url)
+
+        # this is just to ensure that the page has the time to fully load/render.
+        time.sleep(5)
+
+        html = driver.page_source
+
+        # this renders the JS code and stores all
+        # of the information in static HTML code.
+
+        # Applying bs4 to html variable.
+        soup = BeautifulSoup(html, "html.parser")
+
+#         # savePage = soup.contents
+    except Exception as e:
+        print("Failed to render webpage: " + str(e))
+
+    try:
+        # Parsing relevant elements found in the table
+        textBody = soup.find("tbody")
+    except Exception as e:
+        print(e)
+        print('Unable to find div class')
+
+    data = []
+
+    for row in textBody:
+        ele = []
+        rows = []
+        for item in row:
+            ele = item.text.strip()
+            rows.append(ele)
+        if rows:
+            data.append(rows)
+            
+    with open('data/live_reports.json', 'w') as filehandle:
+        json.dump(data, filehandle)
+
+
+
+"""
 Render and parse dynamic page content for power cut reports
 """
 def get_reports():
@@ -66,8 +125,7 @@ def get_reports():
             "div", {"class": "PowerCutListItem_PowerCutListItem__AzYtO"})
 
     except Exception as e:
-        print(e)
-        print('Unable to find div class')
+        print("Unable to find div class: " + str(e))
 
     try:
         data = []
@@ -106,11 +164,26 @@ def get_reports():
 
             cols = cols + postcodes + affected
 
+            # cols = remove_unwanted(cols)
+
             # Each element in 'unwanted' is used as an index of elements
             unwanted = [12, 10, 8, 7, 3, 2, 0]
             # Remove unnecessary elements at each index position found in 'unwanted'
-            for ele in unwanted:
-                del cols[ele]
+            # for ele in unwanted:
+            #     del cols[ele]
+            # Implementing iter() method instead of for loop iteration
+            it = iter(unwanted)
+            while True:
+                try:
+                    x=next(it)
+                except StopIteration:
+                    break
+                else:
+                    try:
+                        del cols[x]
+                    except Exception as e:
+                        print(e)
+                        print('Unable to remove element')
 
             data.append(cols)
         with open('data/live_reports.json', 'w') as filehandle:
@@ -118,6 +191,29 @@ def get_reports():
         print('Success')
     except Exception as e:
         print(e)
+
+
+
+"""
+Remove unnecessary elements
+"""
+def remove_unwanted(columns):
+    # Each element represents an index
+    unwanted = [12, 10, 8, 7, 3, 2, 0]
+    it = iter(unwanted)
+    while True:
+        try:
+            x=next(it)
+        except StopIteration:
+            break
+        else:
+            try:
+                del columns[x]
+            except Exception as e:
+                print('Unable to remove element')
+                return e
+    return columns
+
 
 
 """
@@ -169,6 +265,7 @@ def upload_reports():
         db.session.close()
 
 
+
 """
 Delete rows from before a certain date
 """
@@ -206,5 +303,5 @@ def remove_old_reports():
 ###
 # -----Function calls-----#
 get_reports()
-upload_reports()
+# upload_reports()
 # remove_old_reports()

@@ -6,6 +6,7 @@ import GoogleMapComponent from "./components/PloygonMap";
 
 function App() {
   const [allReports, setAllReports] = useState([]);
+  const apiKey = process.env.REACT_GOOGLE_MAPS_API;
   console.log(process.env.BACKEND_URL);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ function App() {
   }, []);
 
   // useEffect(() => {
-  //   fetch("http://localhost:5001/")
+  //   fetch("http://localhost:5001")
   //     .then((res) => res.json())
   //     .then((data) => setAllReports(data));
   //   // .then((data) => console.log(data));
@@ -32,7 +33,8 @@ function App() {
       <Reports items={allReports} />
       <GoogleMapComponent
         googleMapURL={
-          "https://maps.googleapis.com/maps/api/js?key=AIzaSyC4R6AN7SmujjPUIGKdyao2Kqitzr1kiRg&v=3.exp&libraries=geometry,drawing,places"
+          `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,drawing,places`
+          // "https://maps.googleapis.com/maps/api/js?key=AIzaSyC4R6AN7SmujjPUIGKdyao2Kqitzr1kiRg&v=3.exp&libraries=geometry,drawing,places"
         }
         loadingElement={<div style={{ height: `100%` }} />}
         containerElement={<div style={{ height: `400px` }} />}
