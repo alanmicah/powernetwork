@@ -24,6 +24,7 @@ def index():
 if __name__=='__main__':
    app.debug=True
    app.run(host='0.0.0.0')
+   # session_options={"autoflush": False}
 
 # class User(db.Model):
 #     id = db.Column(db.Integer, primary_key=True)
