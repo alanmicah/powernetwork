@@ -302,6 +302,6 @@ def remove_old_reports():
 
 ###
 # -----Function calls-----#
-get_reports()
-# upload_reports()
+# get_reports()
+upload_reports()
 # remove_old_reports()
